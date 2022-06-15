@@ -1,14 +1,18 @@
 # 1. args, kwargs를 사용하는 예제 코드 짜보기
 ```
-def Func(*args, **kwargs):
-  names = ['철수', '영희', '민호', '민지', '재우']  
-  numbers = {"철수":"010-1111-1111", "영희":"010-2222-2222","민호":"010-3333-3333", "민지":"010-4444-4444", "재우":"010-5555-5555"}
+def Func(*names, **numbers):
+
   for name in names:
-      print(names)
+      print(name)
   for key,value in numbers.items():
       print(f"{key}의 전화번호는 {value}입니다.")
-  
-Func()
+
+
+names = ['철수', '영희', '민호', '민지', '재우']  
+numbers = {"철수":"010-1111-1111", "영희":"010-2222-2222","민호":"010-3333-3333", "민지":"010-4444-4444", "재우":"010-5555-5555"}
+
+Func(*names, **numbers)
+
 ```
 <br>
 
