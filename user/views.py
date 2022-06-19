@@ -1,22 +1,23 @@
+import imp
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import permissions
 from django.contrib.auth import login, logout, authenticate
 
+from django.db.models import F
 
-
-#CBV : class base view
-#FBV : function base view
+from user.serializers import UserSerializer
 
 
 class UserView(APIView): 
-    # permission_classes = [permissions.AllowAny] # 누구나 view 조회 가능
-    # permission_classes = [permissions.IsAdminUser] # admin만 view 조회 가능
     permission_classes = [permissions.IsAuthenticated] # 로그인 된 사용자만 view 조회 가능
 
+    #역참조를 활용해 나와 같은 취미를 가진 사람 찾기
+    #one-to-one field는 예외로 _set이 붙지 않는다.
     def get(self, request):
-        return Response({'message': 'get method!!'})
-        
+        return Response(UserSerializer(request.user).data)
+       
+
     def post(self, request):
         return Response({'message': 'post method!!'})
 
@@ -41,10 +42,6 @@ class UserApiView(APIView):
             
         login(request, user)
         return Response({"message":"로그인 성공!"})
-
-        # else:
-        #     login(request, user)
-        #     return Response({"message":"로그인 성공!"}, status=status.HTTP_200_OK)
 
     #로그아웃
     def delete(self, request):
