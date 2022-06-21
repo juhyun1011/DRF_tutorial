@@ -1,4 +1,4 @@
-import imp
+from functools import partial
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import permissions, status
@@ -7,6 +7,7 @@ from django.contrib.auth import login, logout, authenticate
 from django.db.models import F
 
 from user.serializers import UserSerializer
+from user.models import User as UserModel
 
 
 class UserView(APIView): 
@@ -17,13 +18,29 @@ class UserView(APIView):
     def get(self, request):
         return Response(UserSerializer(request.user, context={"request": request}).data, status=status.HTTP_200_OK)
        
-
+    #회원가입
     def post(self, request):
-        return Response({'message': 'post method!!'})
+        user_serializer= UserSerializer(data=request.data, context={"request": request})
 
-    def put(self, request):
-        return Response({'message': 'put method!!'})
+        if user_serializer.is_valid():
+            user_serializer.save()
+            return Response(user_serializer.data, status=status.HTTP_200_OK)
 
+        return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    #회원 정보 수정
+    def put(self, request, obj_id):
+        # user= request.user
+        user = UserModel.objects.get(id=obj_id)
+        user_serializer = UserSerializer(user, data=request.data, partial= True) #user도 같이 넣어줘야함. 어떤 걸 수정할건지.
+
+        if user_serializer.is_valid():
+            user_serializer.save()
+            return Response(user_serializer.data, status=status.HTTP_200_OK)
+
+        return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    #회원 탈퇴
     def delete(self, request):
         return Response({'message': 'delete method!!'})
 

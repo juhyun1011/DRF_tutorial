@@ -6,6 +6,8 @@ from user.models import Hobby as HobbyModel
 from blog.models import Article as ArticleModel
 from blog.models import Comment as CommentModel
 
+from blog.serializers import ArticleSerializer
+
 
 class HobbySerializer(serializers.ModelSerializer):
     same_hobby_users = serializers.SerializerMethodField()
@@ -25,37 +27,64 @@ class HobbySerializer(serializers.ModelSerializer):
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
-    hobby = HobbySerializer(many=True) #input data가 queryset일 경우 many=True
+    hobby = HobbySerializer(many=True, read_only=True) #input data가 queryset일 경우 many=True
+    get_hobbys = serializers.ListField(required=False)
 
     class Meta:
         model = UserProfileModel  
-        fields = ["introduction", "birthday", "age", "hobby"]
+        fields = ["introduction", "birthday", "age", "hobby", "get_hobbys"]
 
 
-######
-class CommentSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = CommentModel
-        fields = "__all__"
-
-
-class AricleSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = ArticleModel
-        fields = "__all__"
-
-###########
 
 class UserSerializer(serializers.ModelSerializer):
     userprofile = UserProfileSerializer()
-    article_set = AricleSerializer(many=True)
-    comment_set = CommentSerializer(many=True)
+    articles = ArticleSerializer(many=True, source="article_set", read_only=True)
 
+    def validate(self, data):
+        if not data.get("email","").endswith("@naver.com"):
+            raise serializers.ValidationError(
+                detail={"error":"네이버 메일만 가입할 수 있습니다."}
+            )
+        return data
+
+
+    #기존 함수를 덮어씀
+    def create(self, validated_data):
+        user_profile = validated_data.pop('userprofile')
+        get_hobbys = user_profile.pop("get_hobbys", [])
+
+        # User object 생성
+        user = UserModel(**validated_data)
+        user.save()
+
+        # UserProfile object 생성
+        user_profile = UserProfileModel.objects.create(user=user, **user_profile)
+        
+        # hobby 등록
+        user_profile.hobby.add(*get_hobbys)
+        user_profile.save()
+
+        return user
+
+        
 
     class Meta:
         model = UserModel  
-        fields = ["username", "email", "fullname", "join_date", "userprofile", "article_set", "comment_set"]   #리스트로 어떤 필드를 리턴해줄지 지정
+        fields = ["username","password", "email", "fullname", "join_date", "userprofile", "articles"]   #리스트로 어떤 필드를 리턴해줄지 지정
 
-
+        extra_kwargs = {
+                # write_only : 해당 필드를 쓰기 전용으로 만들어 준다.
+                # 쓰기 전용으로 설정 된 필드는 직렬화 된 데이터에서 보여지지 않는다.
+                'password': {'write_only': True}, # default : False
+                'email': {
+                    # error_messages : 에러 메세지를 자유롭게 설정 할 수 있다.
+                    'error_messages': {
+                        # required : 값이 입력되지 않았을 때 보여지는 메세지
+                        'required': '이메일을 입력해주세요.',
+                        # invalid : 값의 포맷이 맞지 않을 때 보여지는 메세지
+                        'invalid': '알맞은 형식의 이메일을 입력해주세요.'
+                        },
+                        # required : validator에서 해당 값의 필요 여부를 판단한다.
+                        'required': False # default : True
+                        },
+                }
