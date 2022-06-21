@@ -15,7 +15,7 @@ class UserView(APIView):
     #역참조를 활용해 나와 같은 취미를 가진 사람 찾기
     #one-to-one field는 예외로 _set이 붙지 않는다.
     def get(self, request):
-        return Response(UserSerializer(request.user).data, status=status.HTTP_200_OK)
+        return Response(UserSerializer(request.user, context={"request": request}).data, status=status.HTTP_200_OK)
        
 
     def post(self, request):

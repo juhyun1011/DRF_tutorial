@@ -11,13 +11,13 @@ class HobbySerializer(serializers.ModelSerializer):
     same_hobby_users = serializers.SerializerMethodField()
     def get_same_hobby_users(self, obj):
         # obj : hobby model의 object
-
+        user= self.context["request"].user
         user_list = []
-        for user_profile in obj.userprofile_set.all():
+        for user_profile in obj.userprofile_set.exclude(user=user):
             user_list.append(user_profile.user.username)
         return user_list
 
-        # return [user_profile.user.username for user_profile in obj.userprofile_set.all()]
+        # return [user_profile.user.username for user_profile in obj.userprofile_set.exclude(user=user)]
 
     class Meta:
         model = HobbyModel 

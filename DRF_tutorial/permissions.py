@@ -40,7 +40,7 @@ class IsAdminandIsSevendaysOrIsAuthenticatedReadOnly(BasePermission):
                 }
             raise GenericAPIException(status_code=status.HTTP_401_UNAUTHORIZED, detail=response)
 
-        if user.is_authenticated and user.is_admin and user.join_date < (timezone.now() - timedelta(days=7)):
+        if user.is_authenticated and user.is_admin or user.join_date < (timezone.now() - timedelta(days=7)):
             return True
             
         if user.is_authenticated and request.method in self.SAFE_METHODS:
