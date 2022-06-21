@@ -1,4 +1,6 @@
 from django.db import models
+from datetime import datetime, timedelta
+from django.utils import timezone
 
 
 # Create your models here.
@@ -15,6 +17,8 @@ class Article(models.Model):
     author = models.ForeignKey('user.User', verbose_name="작성자", on_delete=models.CASCADE)
     category = models.ManyToManyField(Category)
     content = models.TextField("내용")
+    exposed_start =  models.DateTimeField("노출 시작 일자")
+    exposed_end = models.DateTimeField("노출 종료 일자")
 
     def __str__(self):
         return self.title

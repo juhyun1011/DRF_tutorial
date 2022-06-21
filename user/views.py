@@ -1,7 +1,7 @@
 import imp
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import permissions
+from rest_framework import permissions, status
 from django.contrib.auth import login, logout, authenticate
 
 from django.db.models import F
@@ -15,7 +15,7 @@ class UserView(APIView):
     #역참조를 활용해 나와 같은 취미를 가진 사람 찾기
     #one-to-one field는 예외로 _set이 붙지 않는다.
     def get(self, request):
-        return Response(UserSerializer(request.user).data)
+        return Response(UserSerializer(request.user).data, status=status.HTTP_200_OK)
        
 
     def post(self, request):
