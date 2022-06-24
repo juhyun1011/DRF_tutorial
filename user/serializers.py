@@ -3,8 +3,6 @@ from rest_framework import serializers
 from user.models import User as UserModel
 from user.models import UserProfile as UserProfileModel
 from user.models import Hobby as HobbyModel
-from blog.models import Article as ArticleModel
-from blog.models import Comment as CommentModel
 
 from blog.serializers import ArticleSerializer
 
@@ -13,9 +11,9 @@ class HobbySerializer(serializers.ModelSerializer):
     same_hobby_users = serializers.SerializerMethodField()
     def get_same_hobby_users(self, obj):
         # obj : hobby model의 object
-        user= self.context["request"].user
+        # user= self.context["request"].user
         user_list = []
-        for user_profile in obj.userprofile_set.exclude(user=user):
+        for user_profile in obj.userprofile_set.all():
             user_list.append(user_profile.user.username)
         return user_list
 
@@ -50,23 +48,48 @@ class UserSerializer(serializers.ModelSerializer):
 
     #기존 함수를 덮어씀
     def create(self, validated_data):
-        user_profile = validated_data.pop('userprofile')
+        user_profile = validated_data.pop("userprofile")
         get_hobbys = user_profile.pop("get_hobbys", [])
+        password = validated_data.pop("password")
+        
+
 
         # User object 생성
         user = UserModel(**validated_data)
+        user.set_password(password)
         user.save()
 
         # UserProfile object 생성
         user_profile = UserProfileModel.objects.create(user=user, **user_profile)
-        
-        # hobby 등록
+
+         # hobby 등록
         user_profile.hobby.add(*get_hobbys)
         user_profile.save()
 
         return user
 
+
+    def update(self, instance, validated_data):
+        # instance에는 입력된 object가 담긴다.
+        user_profile = validated_data.pop("userprofile")
+        get_hobbys = user_profile.pop("get_hobbys", [])
+
+        for key, value in validated_data.items():
+            if key == "password":
+                instance.set_password(value)
+                continue
+            
+            setattr(instance, key, value)
+        instance.save()
+
+        user_profile_object = instance.userprofile
+        for key, value in user_profile.items():
+            setattr(user_profile_object, key, value)
         
+        instance.save()
+
+        return instance
+
 
     class Meta:
         model = UserModel  
@@ -88,3 +111,7 @@ class UserSerializer(serializers.ModelSerializer):
                         'required': False # default : True
                         },
                 }
+
+    
+
+   
